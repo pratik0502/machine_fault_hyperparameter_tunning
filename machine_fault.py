@@ -1,3 +1,5 @@
+import mlflow.data
+import mlflow.data
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler,MinMaxScaler
@@ -18,7 +20,7 @@ mlflow.set_tracking_uri('https://dagshub.com/pratik0502/machine_fault_hyperparam
 
 data = pd.read_csv(r"D:\ML_ops\archive\data.csv")
 
-x = data.iloc[:,:-1]
+x = data.iloc[:,0:-1]
 y = data.iloc[:,-1]
 
 sd = StandardScaler()
@@ -28,19 +30,20 @@ x_train,x_test,y_train,y_test = train_test_split(x,y,test_size=0.2,random_state=
  
 
 
-gm = 1
-c = 1
-kernel = 'linear'
+n_estimators = 40
+max_depth = 10
 
-mlflow.set_experiment('machine_fault_SVC')
+mlflow.autolog()
 
-with mlflow.start_run(run_name='SVC with artifcats'):
+mlflow.set_experiment('machine_fault_RD')
 
-    # rd = RandomForestClassifier(n_estimators=n_estimators,max_depth=max_depth)
+with mlflow.start_run(run_name='RD with artifcats'):
+
+    model = RandomForestClassifier(n_estimators=n_estimators,max_depth=max_depth)
 
 
 
-    model = SVC(gamma=gm,kernel=kernel,C=c)
+    # model = SVC(gamma=gm,kernel=kernel,C=c)
     model.fit(x_train,y_train)
 
     y_pred = model.predict(x_test)
@@ -67,14 +70,28 @@ with mlflow.start_run(run_name='SVC with artifcats'):
     # mlflow.log_metric('Confusion_metrics',CM)
     # mlflow.log_metric('Confusion_report',CR)
 
-    mlflow.log_param('gamma',gm)
-    mlflow.log_param('C',c)
-    mlflow.log_param('kernel',kernel)
+    mlflow.log_param('n_estimators',n_estimators)
+    mlflow.log_param('max_depth',max_depth)
 
     mlflow.log_artifact(image_path)
 
     mlflow.sklearn.log_model(model,'SVC')
     mlflow.log_artifact(__file__)
+
+    # train_data = x_train
+    # train_data['fault'] = y_train
+
+    # train_data = mlflow.data.from_padas(train_data)
+
+    # mlflow.log_input(train_data,'training data')
+
+    # test_data = x_test
+    # test_data['fault'] = y_test
+
+    # test_data = mlflow.data.from_pandas(test_data)
+
+    # mlflow.log_input(test_data,'test_data')
+    
 
 
     print('accuracy',acc)
